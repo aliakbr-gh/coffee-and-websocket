@@ -1,0 +1,27 @@
+{
+  "name": "coffee-and-websocket",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aliakbr-gh/coffee-and-websocket.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/aliakbr-gh/coffee-and-websocket/issues"
+  },
+  "homepage": "https://github.com/aliakbr-gh/coffee-and-websocket#readme",
+  "dependencies": {
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

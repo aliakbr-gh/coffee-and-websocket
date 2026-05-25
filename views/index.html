@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chat App</title>
+</head>
+
+<body>
+    <h1>WebSocket Chat</h1>
+
+    <input
+        type="text"
+        id="usernameInput"
+        placeholder="Enter username"
+    >
+
+    <button onclick="joinChat()">
+        Join Chat
+    </button>
+
+    <hr>
+
+    <div id="chatBox"></div>
+
+    <br>
+
+    <input
+        type="text"
+        id="messageInput"
+        placeholder="Enter message"
+    >
+
+    <button onclick="sendMessage()">
+        Send
+    </button>
+
+    <script>
+
+        const socket = new WebSocket("ws://localhost:8080");
+
+        let username = "";
+
+        const chatBox = document.getElementById("chatBox");
+
+        // Connected
+        socket.onopen = () => {
+            console.log("Connected to websocket server");
+        };
+
+        // Receive message
+        socket.onmessage = (event) => {
+
+            console.log("Received from server:");
+            console.log(event.data);
+
+            const data = JSON.parse(event.data);
+
+            console.log(data);
+
+            // System message
+            if (data.type === "system") {
+
+                const div = document.createElement("div");
+
+                div.innerHTML =
+                    "<b>SYSTEM:</b> " + data.message;
+
+                chatBox.appendChild(div);
+
+            }
+
+            // Chat message
+            if (data.type === "chat") {
+
+                const div = document.createElement("div");
+
+                div.innerHTML =
+                    "<b>" +
+                    data.username +
+                    ":</b> " +
+                    data.message;
+
+                chatBox.appendChild(div);
+            }
+        };
+
+        // Join
+        function joinChat() {
+
+            username = document.getElementById("usernameInput").value;
+
+            console.log("Joining as:", username);
+
+            socket.send(JSON.stringify({
+                type: "join",
+                username: username
+            }));
+        }
+
+
+
+        // Send chat message
+        function sendMessage() {
+            const message =
+                document.getElementById("messageInput").value;
+
+            console.log("Sending message:", message);
+
+            socket.send(JSON.stringify({
+                type: "chat",
+                message: message
+            }));
+        }
+    </script>
+</body>
+</html>
