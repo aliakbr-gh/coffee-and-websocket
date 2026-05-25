@@ -8,11 +8,7 @@
 <body>
     <h1>WebSocket Chat</h1>
 
-    <input
-        type="text"
-        id="usernameInput"
-        placeholder="Enter username"
-    >
+    <input type="text" id="usernameInput" placeholder="Enter username">
 
     <button onclick="joinChat()">
         Join Chat
@@ -22,13 +18,11 @@
 
     <div id="chatBox"></div>
 
+    <div id="typingBox"></div>
+
     <br>
 
-    <input
-        type="text"
-        id="messageInput"
-        placeholder="Enter message"
-    >
+    <input type="text" id="messageInput" placeholder="Enter message">
 
     <button onclick="sendMessage()">
         Send
@@ -82,7 +76,32 @@
 
                 chatBox.appendChild(div);
             }
-        };
+
+            // Typing
+            if (data.type === "typing") {
+
+                const typingBox =
+                    document.getElementById("typingBox");
+
+                typingBox.innerHTML =
+                    "<i>" +
+                    data.username +
+                    " is typing...</i>";
+
+                // Remove after 1 second
+                setTimeout(() => {
+                    typingBox.innerHTML = "";
+                }, 1000);
+            }
+        }
+
+        const messageInput = document.getElementById("messageInput");
+
+        messageInput.addEventListener("keydown", () => {
+            socket.send(JSON.stringify({
+                type: "typing"
+            }));
+        });
 
         // Join
         function joinChat() {
@@ -96,8 +115,6 @@
                 username: username
             }));
         }
-
-
 
         // Send chat message
         function sendMessage() {
@@ -113,4 +130,5 @@
         }
     </script>
 </body>
+
 </html>

@@ -1,7 +1,7 @@
 const WebSocket = require("ws");
 
 const wss = new WebSocket.Server({
-    port: 8080
+  port: 8080,
 });
 
 console.log("WebSocket Chat Server Started");
@@ -10,96 +10,115 @@ console.log("WebSocket Chat Server Started");
 const clients = [];
 
 wss.on("connection", (ws) => {
+  console.log("New client connected");
 
-    console.log("New client connected");
+  // Receive message
+  ws.on("message", (message) => {
+    const data = JSON.parse(message);
 
-    // Receive message
-    ws.on("message", (message) => {
+    console.log("Received:");
+    console.log(data);
 
-        const data = JSON.parse(message);
+    // USER JOIN
+    if (data.type === "join") {
+      clients.push({
+        username: data.username,
+        ws: ws,
+      });
 
-        console.log("Received:");
-        console.log(data);
+      console.log(data.username + " joined");
 
-        // USER JOIN
-        if (data.type === "join") {
-            clients.push({
-                username: data.username,
-                ws: ws
-            });
+      // Broadcast join message
+      broadcast({
+        type: "system",
+        message: data.username + " joined chat",
+      });
+    }
 
-            console.log(data.username + " joined");
+    // CHAT MESSAGE
+    if (data.type === "chat") {
+      // Find current user
+      const currentUser = clients.find((client) => {
+        return client.ws === ws;
+      });
 
-            // Broadcast join message
-            broadcast({
-                type: "system",
-                message: data.username + " joined chat"
-            });
-        }
+      if (!currentUser) {
+        return;
+      }
 
+      console.log(currentUser.username + ": " + data.message);
 
-        // CHAT MESSAGE
-        if (data.type === "chat") {
-            // Find current user
-            const currentUser = clients.find((client) => {
-                return client.ws === ws;
-            });
+      // Broadcast chat
+      broadcast({
+        type: "chat",
+        username: currentUser.username,
+        message: data.message,
+      });
+    }
 
-            if (!currentUser) {
-                return;
-            }
+    // CHAT MESSAGE
+    if (data.type === "typing") {
+      // Find current user
+      const currentUser = clients.find((client) => {
+        return client.ws === ws;
+      });
 
-            console.log(currentUser.username + ": " + data.message);
+      if (!currentUser) {
+        return;
+      }
 
-            // Broadcast chat
-            broadcast({
-                type: "chat",
-                username: currentUser.username,
-                message: data.message
-            });
-        }
-    });
+      wss.clients.forEach((client) => {
 
-
-    // Disconnect
-    ws.on("close", () => {
-
-        console.log("Client disconnected");
-
-        // Find disconnected user
-        const disconnectedUser = clients.find((client) => {
-            return client.ws === ws;
-        });
-
-        // Remove from array
-        const filteredClients = clients.filter((client) => {
-            return client.ws !== ws;
-        });
-
-        clients.length = 0;
-
-        filteredClients.forEach((client) => {
-            clients.push(client);
-        });
-
-        // Broadcast leave message
-        if (disconnectedUser) {
-            broadcast({
-                type: "system",
-                message: disconnectedUser.username + " left chat"
-            });
+        if (
+            client !== ws &&
+            client.readyState === WebSocket.OPEN
+        ) {
+            client.send(JSON.stringify({
+                type: "typing",
+                username: currentUser.username
+            }));
         }
     });
+    }
+  });
+
+  // Disconnect
+  ws.on("close", () => {
+    console.log("Client disconnected");
+
+    // Find disconnected user
+    const disconnectedUser = clients.find((client) => {
+      return client.ws === ws;
+    });
+
+    // Remove from array
+    const filteredClients = clients.filter((client) => {
+      return client.ws !== ws;
+    });
+
+    clients.length = 0;
+
+    filteredClients.forEach((client) => {
+      clients.push(client);
+    });
+
+    // Broadcast leave message
+    if (disconnectedUser) {
+      broadcast({
+        type: "system",
+        message: disconnectedUser.username + " left chat",
+      });
+    }
+  });
 });
-
 
 // Broadcast to all users
 function broadcast(data) {
-    console.log("Broadcasting:");
-    console.log(data);
-    wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(data));
-        }
-    });
+  console.log("Broadcasting:");
+  console.log(data);
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(data));
+    }
+  });
 }
